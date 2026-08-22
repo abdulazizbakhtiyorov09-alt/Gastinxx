@@ -3,130 +3,673 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mening Portfoliom | IT Mutaxassis</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css">
+    <title>BaaStinxx — Music Player & Hub</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #030712;
+            --card-bg: rgba(15, 23, 42, 0.75);
+            --card-border: rgba(234, 179, 8, 0.25);
+            --primary-accent: #facc15;
+            --secondary-accent: #3b82f6;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --glow-color: rgba(250, 204, 21, 0.15);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(30, 58, 138, 0.35) 0%, transparent 45%),
+                radial-gradient(circle at 90% 80%, rgba(234, 179, 8, 0.2) 0%, transparent 40%),
+                radial-gradient(circle at 50% 50%, rgba(15, 23, 42, 0.9) 0%, transparent 70%);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px 15px 120px 15px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Top Bar & Sub Counter */
+        .top-navbar {
+            position: fixed;
+            top: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: calc(100% - 30px);
+            max-width: 800px;
+            background: rgba(15, 23, 42, 0.85);
+            border: 1px solid var(--card-border);
+            padding: 10px 20px;
+            border-radius: 99px;
+            backdrop-filter: blur(16px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 100;
+        }
+
+        .sub-counter-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .sub-counter-badge .icon { font-size: 1.1rem; }
+        .sub-counter-badge .count-num { font-weight: 800; color: var(--primary-accent); font-size: 1rem; }
+        .sub-counter-badge .count-text { font-size: 0.8rem; color: var(--text-muted); }
+
+        .app-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.75rem;
+            color: #22c55e;
+            font-weight: 600;
+            background: rgba(34, 197, 94, 0.1);
+            padding: 4px 10px;
+            border-radius: 20px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background-color: #22c55e;
+            border-radius: 50%;
+            box-shadow: 0 0 8px #22c55e;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(1.2); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        /* Background Decorative Elements */
+        .bg-decor {
+            position: absolute;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            opacity: 0.25;
+            user-select: none;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .bg-decor img.flag { width: 32px; height: auto; border-radius: 4px; filter: drop-shadow(0 2px 8px rgba(0,0,0,0.5)); }
+        .bg-decor span.icon { font-size: 1.8rem; }
+
+        .decor-1 { top: 10%; left: 3%; }
+        .decor-2 { top: 15%; right: 4%; }
+        .decor-3 { top: 50%; left: 2%; }
+        .decor-4 { top: 70%; right: 3%; }
+
+        /* Main Container */
+        .container {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 680px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 70px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary-accent), var(--secondary-accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -1px;
+        }
+
+        .header-flag { width: 38px; height: auto; border-radius: 6px; }
+        .header p { color: var(--text-muted); font-size: 0.9rem; margin-top: 6px; }
+
+        /* Navigation Tabs */
+        .tab-menu {
+            display: flex;
+            gap: 10px;
+            background: rgba(15, 23, 42, 0.6);
+            padding: 6px;
+            border-radius: 99px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            margin-bottom: 20px;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 0.85rem;
+            border-radius: 99px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, var(--secondary-accent), #1d4ed8);
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+        }
+
+        /* VIP Subscription Card */
+        .subscribe-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            padding: 20px;
+            border-radius: 24px;
+            width: 100%;
+            margin-bottom: 25px;
+            text-align: center;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+        }
+
+        .subscribe-card h3 { font-size: 1.1rem; margin-bottom: 6px; color: #fff; }
+        .subscribe-card p { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 15px; }
+
+        .sub-form { display: flex; gap: 8px; }
+
+        .sub-input {
+            flex: 1;
+            padding: 12px 18px;
+            border-radius: 99px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(0,0,0,0.5);
+            color: #fff;
+            outline: none;
+            font-size: 0.85rem;
+        }
+
+        .sub-btn {
+            padding: 12px 20px;
+            border-radius: 99px;
+            border: none;
+            background: linear-gradient(135deg, #eab308, #ca8a04);
+            color: #0f172a;
+            font-weight: 700;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .sub-btn:hover { background: #facc15; transform: translateY(-1px); }
+
+        /* Search Box */
+        .search-box {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+            margin-bottom: 25px;
+            background: rgba(15, 23, 42, 0.85);
+            padding: 6px 6px 6px 18px;
+            border-radius: 99px;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            backdrop-filter: blur(12px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+        }
+
+        .search-input {
+            flex: 1;
+            border: none;
+            outline: none;
+            background: transparent;
+            color: #fff;
+            font-size: 0.95rem;
+        }
+
+        .search-btn {
+            padding: 12px 26px;
+            border-radius: 99px;
+            border: none;
+            background: linear-gradient(135deg, #2563eb, #eab308);
+            color: #fff;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        /* Music List & Cards */
+        .music-list {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .track-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            padding: 12px 16px;
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            backdrop-filter: blur(10px);
+            transition: all 0.25s ease;
+        }
+
+        .track-card:hover {
+            background: rgba(30, 41, 59, 0.85);
+            border-color: rgba(234, 179, 8, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .track-info { display: flex; align-items: center; gap: 14px; overflow: hidden; flex: 1; }
+        .track-info img { width: 52px; height: 52px; border-radius: 12px; object-fit: cover; }
+        .track-details { overflow: hidden; }
+        .track-details h4 { font-size: 0.95rem; font-weight: 600; color: #f4f4f5; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .track-details p { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; }
+
+        .card-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-action {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 0.9rem;
+        }
+
+        .btn-action:hover { background: rgba(255, 255, 255, 0.2); transform: scale(1.05); }
+        .btn-action.play-btn { background: var(--primary-accent); color: #000; font-size: 1rem; border: none; }
+        .btn-action.fav-btn.active { color: #ef4444; border-color: rgba(239, 68, 68, 0.4); }
+
+        /* Floating Audio Player Widget */
+        .player-bar {
+            position: fixed;
+            bottom: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: calc(100% - 30px);
+            max-width: 680px;
+            background: rgba(15, 23, 42, 0.95);
+            border: 1px solid var(--card-border);
+            border-radius: 24px;
+            padding: 12px 20px;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .player-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .player-track-details {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            overflow: hidden;
+            max-width: 60%;
+        }
+
+        .player-track-details img { width: 42px; height: 42px; border-radius: 8px; object-fit: cover; }
+        .player-text h5 { font-size: 0.85rem; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .player-text p { font-size: 0.75rem; color: var(--text-muted); }
+
+        .player-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .player-btn {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .player-btn:hover { color: var(--primary-accent); }
+        .player-btn.play { background: var(--primary-accent); color: #000; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+
+        .progress-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+        }
+
+        .time-stamp { font-size: 0.7rem; color: var(--text-muted); min-width: 32px; text-align: center; }
+
+        .progress-bar {
+            flex: 1;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--secondary-accent), var(--primary-accent));
+            width: 0%;
+            border-radius: 4px;
+        }
+
+        .status-msg { text-align: center; color: var(--text-muted); font-size: 0.9rem; margin-top: 30px; }
+
+        @media (max-width: 480px) {
+            .header h1 { font-size: 2rem; }
+            .top-navbar { padding: 8px 16px; }
+            .app-status span.text { display: none; }
+            .sub-btn { padding: 12px 14px; }
+        }
+    </style>
 </head>
 <body>
 
-    <div class="glow-bg glow-cyan"></div>
-    <div class="glow-bg glow-amber"></div>
+    <!-- Top Status Bar -->
+    <div class="top-navbar">
+        <div class="sub-counter-badge">
+            <span class="icon">👥</span>
+            <span class="count-num" id="subCount">15,312</span>
+            <span class="count-text">obunachi</span>
+        </div>
+        <div class="app-status">
+            <div class="status-dot"></div>
+            <span class="text">ONLINE HUB</span>
+        </div>
+    </div>
 
-    <header>
-        <nav class="navbar">
-            <a href="#" class="logo">B.A.A<span>.</span></a>
-            <ul class="nav-links">
-                <li><a href="#about">Men haqimda</a></li>
-                <li><a href="#skills">Ko'nikmalar</a></li>
-                <li><a href="#projects">Loyihalar</a></li>
-                <li><a href="#contact">Aloqa</a></li>
-            </ul>
-            <div class="menu-btn">
-                <i class="fa-solid fa-bars"></i>
+    <!-- Decorative Elements -->
+    <div class="bg-decor decor-1"><span class="icon">⚡</span><img class="flag" src="https://flagcdn.com/w80/uz.png" alt="UZ"></div>
+    <div class="bg-decor decor-2"><img class="flag" src="https://flagcdn.com/w80/uz.png" alt="UZ"><span class="icon">⚡</span></div>
+    <div class="bg-decor decor-3"><span class="icon">🎧</span></div>
+    <div class="bg-decor decor-4"><img class="flag" src="https://flagcdn.com/w80/uz.png" alt="UZ"></div>
+
+    <!-- Main Section -->
+    <div class="container">
+        <div class="header">
+            <div class="header-title">
+                <h1>BaaStinxx Music</h1>
+                <img class="header-flag" src="https://flagcdn.com/w80/uz.png" alt="Uzbekistan Flag">
             </div>
-        </nav>
-    </header>
+            <p>Eng mashhur va sifatli taronalar to'plami ⚡</p>
+        </div>
 
-    <section class="hero">
-        <div class="hero-content">
-            <h3>Salom, men</h3>
-            <h1>Abdulaziz</h1>
-            <h2>Junior <span class="typed-text">Web Dasturchiman</span></h2>
-            <p>14 yoshdaman va zamonaviy veb-saytlar yaratishni o'rganib kelmoqdaman. Texnologiyaga bo'lgan qiziqishim yuqori va doim yangilikka intilaman.</p>
-            <div class="btn-box">
-                <a href="#contact" class="btn">Bog'lanish</a>
-                <a href="#projects" class="btn secondary">Loyihalarim</a>
+        <!-- Navigation Tabs -->
+        <div class="tab-menu">
+            <button class="tab-btn active" onclick="switchTab('explore')">🔥 Trendlar</button>
+            <button class="tab-btn" onclick="switchTab('favorites')">❤️ Saralanganlar</button>
+        </div>
+
+        <!-- VIP Subscription Box -->
+        <div class="subscribe-card" id="subCard">
+            <h3>VIP Hamjamiyatga Qo'shiling 👑</h3>
+            <p>Eksklyuziv yangi musiqalar va relizlardan birinchilardan bo'lib xabardor bo'ling!</p>
+            <div class="sub-form">
+                <input type="email" id="subEmail" class="sub-input" placeholder="Elektron pochtangiz...">
+                <button onclick="subscribeUser()" class="sub-btn">Obuna bo'lish</button>
             </div>
         </div>
-        <div class="hero-img">
-            <div class="img-box">
-                <img src="./aaaaaa.jpg" alt="Profil rasmi">
-            </div>
-        </div>
-    </section>
 
-    <section id="about" class="about">
-        <h2 class="section-title">Men <span>Haqimda</span></h2>
-        <div class="about-container">
-            <div class="about-text">
-                <p>Men dasturlash olamiga erta qadam qo'yganman. Hozirda HTML, CSS, JavaScript va boshqa zamonaviy web texnologiyalarni chuqur o'rganmoqdaman. Maqsadim — kelajakda kuchli Senior Full-Stack dasturchi bo'lish va dunyoni o'zgartiruvchi loyihalar yaratish.</p>
-                <div class="personal-info">
-                    <div class="info-item"><i class="fa-solid fa-cake-candles"></i> <span><strong>Yosh:</strong> 14</span></div>
-                    <div class="info-item"><i class="fa-solid fa-location-dot"></i> <span><strong>Manzil:</strong> Sergeli 5A</span></div>
-                    <div class="info-item"><i class="fa-solid fa-graduation-cap"></i> <span><strong>O'qish joyi:</strong> IT Maktab /Xancom</span></div>
+        <!-- Search Input -->
+        <div class="search-box">
+            <input type="text" id="searchInput" class="search-input" placeholder="Tarona nomi yoki ijrochi..." onkeypress="handleKeyPress(event)">
+            <button onclick="searchMusic()" class="search-btn">Qidirish</button>
+        </div>
+
+        <!-- Music List Stream -->
+        <div class="music-list" id="musicList"></div>
+    </div>
+
+    <!-- Persistent Bottom Floating Player -->
+    <div class="player-bar" id="playerBar" style="display: none;">
+        <div class="player-top">
+            <div class="player-track-details">
+                <img id="playerImg" src="" alt="Cover">
+                <div class="player-text">
+                    <h5 id="playerTitle">Tarona nomi</h5>
+                    <p id="playerArtist">Ijrochi</p>
                 </div>
             </div>
-        </div>
-    </section>
-
-    <section id="skills" class="skills">
-        <h2 class="section-title">Mening <span>Ko'nikmalarim</span></h2>
-        <div class="skills-grid">
-            <div class="skill-card">
-                <i class="fa-brands fa-html5" style="color: #00e5ff;"></i>
-                <h3>HTML5</h3>
-                <p>Struktura va semantik teglar</p>
-            </div>
-            <div class="skill-card">
-                <i class="fa-brands fa-css3-alt" style="color: #ff9900;"></i>
-                <h3>CSS3</h3>
-                <p>Flexbox, Grid, Animatsiyalar</p>
-            </div>
-            <div class="skill-card">
-                <i class="fa-brands fa-js" style="color: #00e5ff;"></i>
-                <h3>JavaScript</h3>
-                <p>Dinamik sahifalar va mantiq</p>
-            </div>
-            <div class="skill-card">
-                <i class="fa-brands fa-git-alt" style="color: #ff9900;"></i>
-                <h3>Git & GitHub</h3>
-                <p>Versiyalarni boshqarish</p>
+            <div class="player-controls">
+                <button class="player-btn" onclick="togglePlayPause()" id="playPauseBtn">▶</button>
             </div>
         </div>
-    </section>
-
-    <section id="projects" class="projects">
-        <h2 class="section-title">Mening <span>Loyihalarim</span></h2>
-        <div class="projects-grid">
-            <div class="project-card">
-                <div class="project-info">
-                    <h3>Portfolio</h3>
-                    <p>Mening qilgan loyihalarim qoyib boriladigon ilova.</p>
-                  
-                </div>
+        <div class="progress-container">
+            <span class="time-stamp" id="currentTime">0:00</span>
+            <div class="progress-bar" onclick="seekAudio(event)">
+                <div class="progress-fill" id="progressFill"></div>
             </div>
-            <div class="project-card">
-                <div class="project-info">
-                    <h3>To-Do List</h3>
-                    <p>Vazifalarni rejalashtirish va saqlab qolish uchun mo'ljallangan qulay veb sahifa.</p>
-                   
-                </div>
-            </div>
+            <span class="time-stamp" id="durationTime">0:00</span>
         </div>
-    </section>
+    </div>
 
-    <section id="contact" class="contact">
-        <h2 class="section-title">Bog'<span>lanish</span></h2>
-        <form class="contact-form">
-            <div class="input-box">
-                <input type="text" placeholder="Ismingiz" required>
-                <input type="email" placeholder="Elektron pochtangiz" required>
-            </div>
-            <textarea placeholder="Xabaringiz..." rows="5" required></textarea>
-            <button type="submit" class="btn">Xabar yuborish</button>
-        </form>
-    </section>
+    <audio id="globalAudio"></audio>
 
-    <footer>
-        <p>&copy; 2026 B.A.A. Barcha huquqlar himoyalangan.</p>
-        <div class="social-icons">
-            <a href="https://github.com/username" target="_blank"><i class="fa-brands fa-github"></i></a>
-            <a href="https://t.me/ABDURAXMONOVch" target="_blank"><i class="fa-brands fa-telegram"></i></a>
-            <a href="https://www.instagram.com/bkhtyrv.10_?igsh=YmE2cnVmNzN4aDdx" target="_blank"><i class="fa-brands fa-instagram"></i></a>
-        </div>
-    </footer>
+    <script>
+        let currentSubscribers = parseInt(localStorage.getItem('baastinxx_sub_count')) || 15312;
+        let favoriteTracks = JSON.parse(localStorage.getItem('baastinxx_favs')) || [];
+        let currentTab = 'explore';
 
-    <script src="script.js"></script>
+        const audio = document.getElementById('globalAudio');
+
+        document.getElementById('subCount').innerText = currentSubscribers.toLocaleString();
+
+        window.addEventListener('DOMContentLoaded', () => {
+            searchMusic('top music');
+            setupAudioEvents();
+        });
+
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            if(tab === 'explore') {
+                event.target.classList.add('active');
+                searchMusic('top music');
+            } else {
+                event.target.classList.add('active');
+                renderFavorites();
+            }
+        }
+
+        function subscribeUser() {
+            const email = document.getElementById('subEmail').value.trim();
+            if(!email) {
+                alert("Iltimos, pochtangizni kiriting!");
+                return;
+            }
+            
+            currentSubscribers += 1;
+            localStorage.setItem('baastinxx_sub_count', currentSubscribers);
+            document.getElementById('subCount').innerText = currentSubscribers.toLocaleString();
+
+            document.getElementById('subCard').innerHTML = `
+                <h3 style="color: #22c55e;">Siz guruhimizdasiz! 🎉</h3>
+                <p>Xush kelibsiz: ${email}</p>
+            `;
+        }
+
+        function handleKeyPress(e) {
+            if (e.key === 'Enter') searchMusic();
+        }
+
+        async function searchMusic(defaultQuery = null) {
+            if(currentTab !== 'explore') switchTab('explore');
+            let query = defaultQuery || document.getElementById('searchInput').value.trim();
+            const musicList = document.getElementById('musicList');
+            
+            if (!query) return;
+
+            musicList.innerHTML = `<p class="status-msg">Taronalar yuklanmoqda...</p>`;
+
+            try {
+                let response = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&media=music&limit=25`);
+                let data = await response.json();
+
+                renderTracks(data.results);
+            } catch (error) {
+                musicList.innerHTML = `<p class="status-msg">Ulanishda xatolik yuz berdi 😕 Qaytadan urinib ko'ring.</p>`;
+            }
+        }
+
+        function renderTracks(tracks) {
+            const musicList = document.getElementById('musicList');
+            musicList.innerHTML = "";
+
+            if (!tracks || tracks.length === 0) {
+                musicList.innerHTML = `<p class="status-msg">Musiqa topilmadi.</p>`;
+                return;
+            }
+
+            tracks.forEach(track => {
+                const coverUrl = track.artworkUrl100 ? track.artworkUrl100.replace('100x100bb', '300x300bb') : '';
+                const isFav = favoriteTracks.some(f => f.trackId === track.trackId);
+
+                const card = document.createElement('div');
+                card.className = 'track-card';
+                card.innerHTML = `
+                    <div class="track-info">
+                        <img src="${coverUrl}" alt="cover">
+                        <div class="track-details">
+                            <h4>${track.trackName}</h4>
+                            <p>${track.artistName}</p>
+                        </div>
+                    </div>
+                    <div class="card-actions">
+                        <button class="btn-action fav-btn ${isFav ? 'active' : ''}" onclick="toggleFav('${track.trackId}', '${escapeQuotes(track.trackName)}', '${escapeQuotes(track.artistName)}', '${coverUrl}', '${track.previewUrl}')">
+                            ${isFav ? '❤️' : '🤍'}
+                        </button>
+                        <button class="btn-action play-btn" onclick="playTrack('${track.previewUrl}', '${escapeQuotes(track.trackName)}', '${escapeQuotes(track.artistName)}', '${coverUrl}')">▶</button>
+                    </div>
+                `;
+                musicList.appendChild(card);
+            });
+        }
+
+        function escapeQuotes(str) {
+            return str.replace(/'/g, "\\'");
+        }
+
+        function toggleFav(id, name, artist, cover, preview) {
+            const index = favoriteTracks.findIndex(f => f.trackId == id);
+            if(index > -1) {
+                favoriteTracks.splice(index, 1);
+            } else {
+                favoriteTracks.push({ trackId: id, trackName: name, artistName: artist, artworkUrl100: cover, previewUrl: preview });
+            }
+            localStorage.setItem('baastinxx_favs', JSON.stringify(favoriteTracks));
+            
+            if(currentTab === 'favorites') {
+                renderFavorites();
+            } else {
+                searchMusic(document.getElementById('searchInput').value || 'top music');
+            }
+        }
+
+        function renderFavorites() {
+            if(favoriteTracks.length === 0) {
+                document.getElementById('musicList').innerHTML = `<p class="status-msg">Hali hech qanday tarona saralanmagan ❤️</p>`;
+                return;
+            }
+            renderTracks(favoriteTracks);
+        }
+
+        function playTrack(url, name, artist, cover) {
+            audio.src = url;
+            audio.play();
+            
+            document.getElementById('playerBar').style.display = 'flex';
+            document.getElementById('playerTitle').innerText = name;
+            document.getElementById('playerArtist').innerText = artist;
+            document.getElementById('playerImg').src = cover;
+            document.getElementById('playPauseBtn').innerText = '⏸';
+        }
+
+        function togglePlayPause() {
+            if(audio.paused) {
+                audio.play();
+                document.getElementById('playPauseBtn').innerText = '⏸';
+            } else {
+                audio.pause();
+                document.getElementById('playPauseBtn').innerText = '▶';
+            }
+        }
+
+        function setupAudioEvents() {
+            audio.addEventListener('timeupdate', () => {
+                if(!audio.duration) return;
+                const progress = (audio.currentTime / audio.duration) * 100;
+                document.getElementById('progressFill').style.width = `${progress}%`;
+                document.getElementById('currentTime').innerText = formatTime(audio.currentTime);
+                document.getElementById('durationTime').innerText = formatTime(audio.duration);
+            });
+
+            audio.addEventListener('ended', () => {
+                document.getElementById('playPauseBtn').innerText = '▶';
+            });
+        }
+
+        function formatTime(secs) {
+            const m = Math.floor(secs / 60);
+            const s = Math.floor(secs % 60);
+            return `${m}:${s < 10 ? '0' : ''}${s}`;
+        }
+
+        function seekAudio(e) {
+            const rect = e.currentTarget.getBoundingClientRect();
+            const clickPosition = (e.clientX - rect.left) / rect.width;
+            audio.currentTime = clickPosition * audio.duration;
+        }
+    </script>
 </body>
 </html>
