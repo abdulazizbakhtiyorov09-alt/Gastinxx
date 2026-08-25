@@ -2,673 +2,801 @@
 <html lang="uz">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BaaStinxx — Music Player & Hub</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Gastinxx Ultimate 3D Supercar & City Simulator Pro</title>
     <style>
-        :root {
-            --bg-color: #030712;
-            --card-bg: rgba(15, 23, 42, 0.75);
-            --card-border: rgba(234, 179, 8, 0.25);
-            --primary-accent: #facc15;
-            --secondary-accent: #3b82f6;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --glow-color: rgba(250, 204, 21, 0.15);
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+        body { overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #000; touch-action: none; }
+        #canvas-container { width: 100vw; height: 100vh; }
+        
+        #loader-screen {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: #09090b; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; z-index: 9999;
+            transition: opacity 0.8s ease;
+        }
+        #loader-logo {
+            font-size: 54px; font-weight: 900; color: #38bdf8;
+            letter-spacing: 6px; text-shadow: 0 0 30px rgba(56, 189, 248, 0.6);
+            margin-bottom: 20px; animation: pulseLogo 1.5s infinite alternate;
+        }
+        #loader-text { color: #94a3b8; font-size: 16px; letter-spacing: 2px; }
+        @keyframes pulseLogo {
+            0% { transform: scale(1); opacity: 0.8; }
+            100% { transform: scale(1.05); opacity: 1; }
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            -webkit-tap-highlight-color: transparent;
+        #hud {
+            position: absolute; top: 20px; left: 20px; color: #fff;
+            background: rgba(15, 23, 42, 0.95); padding: 20px; border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.15); backdrop-filter: blur(12px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5); width: 310px; z-index: 5;
+        }
+        h1 { font-size: 18px; color: #38bdf8; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
+        p { font-size: 12px; color: #94a3b8; margin: 6px 0; display: flex; justify-content: space-between; align-items: center; }
+        span.key { background: #334155; color: #f8fafc; padding: 2px 8px; border-radius: 4px; font-weight: bold; font-family: monospace; }
+        
+        #dashboard {
+            position: absolute; bottom: 30px; right: 30px;
+            display: flex; gap: 20px; align-items: center; z-index: 5;
+        }
+        .gauge {
+            background: rgba(15, 23, 42, 0.95); border: 2px solid #38bdf8;
+            border-radius: 50%; width: 120px; height: 120px; display: flex;
+            flex-direction: column; align-items: center; justify-content: center;
+            color: #fff; box-shadow: 0 0 25px rgba(56, 189, 248, 0.4);
+        }
+        .gauge-val { font-size: 34px; font-weight: 800; color: #facc15; }
+        .gauge-unit { font-size: 10px; color: #94a3b8; letter-spacing: 1px; margin-top: 2px; }
+
+        #mode-tag {
+            position: absolute; top: 20px; right: 20px;
+            background: #22c55e; color: #052e16; padding: 10px 20px;
+            border-radius: 30px; font-weight: 800; font-size: 13px;
+            letter-spacing: 1px; box-shadow: 0 4px 15px rgba(34, 197, 94, 0.4); z-index: 5;
         }
 
-        body {
-            background-color: var(--bg-color);
-            background-image: 
-                radial-gradient(circle at 10% 20%, rgba(30, 58, 138, 0.35) 0%, transparent 45%),
-                radial-gradient(circle at 90% 80%, rgba(234, 179, 8, 0.2) 0%, transparent 40%),
-                radial-gradient(circle at 50% 50%, rgba(15, 23, 42, 0.9) 0%, transparent 70%);
-            color: var(--text-main);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 20px 15px 120px 15px;
-            position: relative;
-            overflow-x: hidden;
+        #touch-controls { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 100; }
+        
+        #steeringWheelZone {
+            position: absolute; bottom: 30px; left: 30px; width: 150px; height: 150px;
+            background: rgba(255, 255, 255, 0.08); border-radius: 50%; border: 3px solid rgba(255, 255, 255, 0.3);
+            pointer-events: auto; backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+        }
+        #steeringWheel {
+            width: 130px; height: 130px; border-radius: 50%; border: 6px solid rgba(56, 189, 248, 0.8);
+            position: relative; pointer-events: none; transition: transform 0.05s linear;
+            box-shadow: inset 0 0 15px rgba(56, 189, 248, 0.5);
+        }
+        #steeringWheel::after {
+            content: ''; position: absolute; top: 50%; left: 10px; right: 10px; height: 4px;
+            background: rgba(56, 189, 248, 0.8); transform: translateY(-50%);
+        }
+        #steeringWheel::before {
+            content: ''; position: absolute; top: 10px; bottom: 10px; left: 50%; width: 4px;
+            background: rgba(56, 189, 248, 0.8); transform: translateX(-50%);
         }
 
-        /* Top Bar & Sub Counter */
-        .top-navbar {
-            position: fixed;
-            top: 15px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: calc(100% - 30px);
-            max-width: 800px;
-            background: rgba(15, 23, 42, 0.85);
-            border: 1px solid var(--card-border);
-            padding: 10px 20px;
-            border-radius: 99px;
-            backdrop-filter: blur(16px);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            z-index: 100;
+        .btn-touch {
+            position: absolute; width: 65px; height: 65px; border-radius: 50%;
+            background: rgba(255, 255, 255, 0.12); border: 2px solid rgba(255, 255, 255, 0.3);
+            color: #fff; font-weight: bold; font-size: 13px; display: flex; align-items: center; justify-content: center;
+            pointer-events: auto; backdrop-filter: blur(4px); box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
-
-        .sub-counter-badge {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .sub-counter-badge .icon { font-size: 1.1rem; }
-        .sub-counter-badge .count-num { font-weight: 800; color: var(--primary-accent); font-size: 1rem; }
-        .sub-counter-badge .count-text { font-size: 0.8rem; color: var(--text-muted); }
-
-        .app-status {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 0.75rem;
-            color: #22c55e;
-            font-weight: 600;
-            background: rgba(34, 197, 94, 0.1);
-            padding: 4px 10px;
-            border-radius: 20px;
-        }
-
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            background-color: #22c55e;
-            border-radius: 50%;
-            box-shadow: 0 0 8px #22c55e;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.4; transform: scale(1.2); }
-            100% { opacity: 1; transform: scale(1); }
-        }
-
-        /* Background Decorative Elements */
-        .bg-decor {
-            position: absolute;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            opacity: 0.25;
-            user-select: none;
-            pointer-events: none;
-            z-index: 0;
-        }
-
-        .bg-decor img.flag { width: 32px; height: auto; border-radius: 4px; filter: drop-shadow(0 2px 8px rgba(0,0,0,0.5)); }
-        .bg-decor span.icon { font-size: 1.8rem; }
-
-        .decor-1 { top: 10%; left: 3%; }
-        .decor-2 { top: 15%; right: 4%; }
-        .decor-3 { top: 50%; left: 2%; }
-        .decor-4 { top: 70%; right: 3%; }
-
-        /* Main Container */
-        .container {
-            position: relative;
-            z-index: 1;
-            width: 100%;
-            max-width: 680px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin-top: 70px;
-        }
-
-        .header {
-            text-align: center;
-            margin-bottom: 25px;
-        }
-
-        .header-title {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-        }
-
-        .header h1 {
-            font-size: 2.5rem;
-            font-weight: 800;
-            background: linear-gradient(135deg, var(--primary-accent), var(--secondary-accent));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            letter-spacing: -1px;
-        }
-
-        .header-flag { width: 38px; height: auto; border-radius: 6px; }
-        .header p { color: var(--text-muted); font-size: 0.9rem; margin-top: 6px; }
-
-        /* Navigation Tabs */
-        .tab-menu {
-            display: flex;
-            gap: 10px;
-            background: rgba(15, 23, 42, 0.6);
-            padding: 6px;
-            border-radius: 99px;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            margin-bottom: 20px;
-            width: 100%;
-            max-width: 400px;
-        }
-
-        .tab-btn {
-            flex: 1;
-            padding: 10px;
-            border: none;
-            background: transparent;
-            color: var(--text-muted);
-            font-weight: 600;
-            font-size: 0.85rem;
-            border-radius: 99px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .tab-btn.active {
-            background: linear-gradient(135deg, var(--secondary-accent), #1d4ed8);
-            color: #fff;
-            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
-        }
-
-        /* VIP Subscription Card */
-        .subscribe-card {
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            padding: 20px;
-            border-radius: 24px;
-            width: 100%;
-            margin-bottom: 25px;
-            text-align: center;
-            backdrop-filter: blur(12px);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
-        }
-
-        .subscribe-card h3 { font-size: 1.1rem; margin-bottom: 6px; color: #fff; }
-        .subscribe-card p { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 15px; }
-
-        .sub-form { display: flex; gap: 8px; }
-
-        .sub-input {
-            flex: 1;
-            padding: 12px 18px;
-            border-radius: 99px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            background: rgba(0,0,0,0.5);
-            color: #fff;
-            outline: none;
-            font-size: 0.85rem;
-        }
-
-        .sub-btn {
-            padding: 12px 20px;
-            border-radius: 99px;
-            border: none;
-            background: linear-gradient(135deg, #eab308, #ca8a04);
-            color: #0f172a;
-            font-weight: 700;
-            font-size: 0.85rem;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-
-        .sub-btn:hover { background: #facc15; transform: translateY(-1px); }
-
-        /* Search Box */
-        .search-box {
-            display: flex;
-            gap: 10px;
-            width: 100%;
-            margin-bottom: 25px;
-            background: rgba(15, 23, 42, 0.85);
-            padding: 6px 6px 6px 18px;
-            border-radius: 99px;
-            border: 1px solid rgba(59, 130, 246, 0.3);
-            backdrop-filter: blur(12px);
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
-        }
-
-        .search-input {
-            flex: 1;
-            border: none;
-            outline: none;
-            background: transparent;
-            color: #fff;
-            font-size: 0.95rem;
-        }
-
-        .search-btn {
-            padding: 12px 26px;
-            border-radius: 99px;
-            border: none;
-            background: linear-gradient(135deg, #2563eb, #eab308);
-            color: #fff;
-            font-weight: 600;
-            font-size: 0.9rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        /* Music List & Cards */
-        .music-list {
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .track-card {
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            padding: 12px 16px;
-            border-radius: 18px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-            backdrop-filter: blur(10px);
-            transition: all 0.25s ease;
-        }
-
-        .track-card:hover {
-            background: rgba(30, 41, 59, 0.85);
-            border-color: rgba(234, 179, 8, 0.5);
-            transform: translateY(-2px);
-        }
-
-        .track-info { display: flex; align-items: center; gap: 14px; overflow: hidden; flex: 1; }
-        .track-info img { width: 52px; height: 52px; border-radius: 12px; object-fit: cover; }
-        .track-details { overflow: hidden; }
-        .track-details h4 { font-size: 0.95rem; font-weight: 600; color: #f4f4f5; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .track-details p { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; }
-
-        .card-actions {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .btn-action {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: #fff;
-            width: 38px;
-            height: 38px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: 0.2s;
-            font-size: 0.9rem;
-        }
-
-        .btn-action:hover { background: rgba(255, 255, 255, 0.2); transform: scale(1.05); }
-        .btn-action.play-btn { background: var(--primary-accent); color: #000; font-size: 1rem; border: none; }
-        .btn-action.fav-btn.active { color: #ef4444; border-color: rgba(239, 68, 68, 0.4); }
-
-        /* Floating Audio Player Widget */
-        .player-bar {
-            position: fixed;
-            bottom: 15px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: calc(100% - 30px);
-            max-width: 680px;
-            background: rgba(15, 23, 42, 0.95);
-            border: 1px solid var(--card-border);
-            border-radius: 24px;
-            padding: 12px 20px;
-            backdrop-filter: blur(20px);
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
-            z-index: 1000;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .player-top {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .player-track-details {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            overflow: hidden;
-            max-width: 60%;
-        }
-
-        .player-track-details img { width: 42px; height: 42px; border-radius: 8px; object-fit: cover; }
-        .player-text h5 { font-size: 0.85rem; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .player-text p { font-size: 0.75rem; color: var(--text-muted); }
-
-        .player-controls {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .player-btn {
-            background: none;
-            border: none;
-            color: #fff;
-            font-size: 1.1rem;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-
-        .player-btn:hover { color: var(--primary-accent); }
-        .player-btn.play { background: var(--primary-accent); color: #000; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
-
-        .progress-container {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            width: 100%;
-        }
-
-        .time-stamp { font-size: 0.7rem; color: var(--text-muted); min-width: 32px; text-align: center; }
-
-        .progress-bar {
-            flex: 1;
-            height: 4px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 4px;
-            cursor: pointer;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, var(--secondary-accent), var(--primary-accent));
-            width: 0%;
-            border-radius: 4px;
-        }
-
-        .status-msg { text-align: center; color: var(--text-muted); font-size: 0.9rem; margin-top: 30px; }
-
-        @media (max-width: 480px) {
-            .header h1 { font-size: 2rem; }
-            .top-navbar { padding: 8px 16px; }
-            .app-status span.text { display: none; }
-            .sub-btn { padding: 12px 14px; }
-        }
+        .btn-touch:active { background: rgba(255, 255, 255, 0.35); transform: scale(0.95); }
+        
+        #btn-f { bottom: 30px; right: 30px; background: rgba(59, 130, 246, 0.3); border-color: rgba(59, 130, 246, 0.6); }
+        #btn-t { bottom: 105px; right: 30px; background: rgba(168, 85, 247, 0.3); border-color: rgba(168, 85, 247, 0.6); }
+        #btn-n { bottom: 180px; right: 30px; background: rgba(234, 179, 8, 0.3); border-color: rgba(234, 179, 8, 0.6); }
+        #btn-g { bottom: 255px; right: 30px; background: rgba(249, 115, 22, 0.3); border-color: rgba(249, 115, 22, 0.6); }
+        
+        #btn-gas { bottom: 30px; right: 110px; background: rgba(34, 197, 94, 0.3); border-color: rgba(34, 197, 94, 0.6); display: none; width: 70px; height: 70px; }
+        #btn-brake { bottom: 30px; right: 190px; background: rgba(239, 68, 68, 0.3); border-color: rgba(239, 68, 68, 0.6); display: none; width: 70px; height: 70px; }
     </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
 
-    <!-- Top Status Bar -->
-    <div class="top-navbar">
-        <div class="sub-counter-badge">
-            <span class="icon">👥</span>
-            <span class="count-num" id="subCount">15,312</span>
-            <span class="count-text">obunachi</span>
-        </div>
-        <div class="app-status">
-            <div class="status-dot"></div>
-            <span class="text">ONLINE HUB</span>
+    <div id="loader-screen">
+        <div id="loader-logo">GASTINXX</div>
+        <div id="loader-text">SUPERCAR YUKLANMOQDA...</div>
+    </div>
+
+    <div id="hud">
+        <h1>Gastinxx Simulator</h1>
+        <p>Harakatlanish <span class="key">W A S D</span></p>
+        <p>Yugurish <span class="key">SHIFT</span></p>
+        <p>Sakrash <span class="key">SPACE</span></p>
+        <p>Minish / Tushish <span class="key">F</span></p>
+        <p>Tyuning <span class="key">T</span></p>
+        <p>Garaj Eshigi <span class="key">G</span></p>
+        <p>Kun / Tun <span class="key">N</span></p>
+        <p>Faralar <span class="key">L</span></p>
+    </div>
+
+    <div id="mode-tag">REJIM: PERSONAJ</div>
+
+    <div id="dashboard">
+        <div class="gauge">
+            <span id="speed-num" class="gauge-val">0</span>
+            <span class="gauge-unit">KM/H</span>
         </div>
     </div>
 
-    <!-- Decorative Elements -->
-    <div class="bg-decor decor-1"><span class="icon">⚡</span><img class="flag" src="https://flagcdn.com/w80/uz.png" alt="UZ"></div>
-    <div class="bg-decor decor-2"><img class="flag" src="https://flagcdn.com/w80/uz.png" alt="UZ"><span class="icon">⚡</span></div>
-    <div class="bg-decor decor-3"><span class="icon">🎧</span></div>
-    <div class="bg-decor decor-4"><img class="flag" src="https://flagcdn.com/w80/uz.png" alt="UZ"></div>
-
-    <!-- Main Section -->
-    <div class="container">
-        <div class="header">
-            <div class="header-title">
-                <h1>BaaStinxx Music</h1>
-                <img class="header-flag" src="https://flagcdn.com/w80/uz.png" alt="Uzbekistan Flag">
-            </div>
-            <p>Eng mashhur va sifatli taronalar to'plami ⚡</p>
+    <div id="touch-controls">
+        <div id="steeringWheelZone">
+            <div id="steeringWheel"></div>
         </div>
-
-        <!-- Navigation Tabs -->
-        <div class="tab-menu">
-            <button class="tab-btn active" onclick="switchTab('explore')">🔥 Trendlar</button>
-            <button class="tab-btn" onclick="switchTab('favorites')">❤️ Saralanganlar</button>
-        </div>
-
-        <!-- VIP Subscription Box -->
-        <div class="subscribe-card" id="subCard">
-            <h3>VIP Hamjamiyatga Qo'shiling 👑</h3>
-            <p>Eksklyuziv yangi musiqalar va relizlardan birinchilardan bo'lib xabardor bo'ling!</p>
-            <div class="sub-form">
-                <input type="email" id="subEmail" class="sub-input" placeholder="Elektron pochtangiz...">
-                <button onclick="subscribeUser()" class="sub-btn">Obuna bo'lish</button>
-            </div>
-        </div>
-
-        <!-- Search Input -->
-        <div class="search-box">
-            <input type="text" id="searchInput" class="search-input" placeholder="Tarona nomi yoki ijrochi..." onkeypress="handleKeyPress(event)">
-            <button onclick="searchMusic()" class="search-btn">Qidirish</button>
-        </div>
-
-        <!-- Music List Stream -->
-        <div class="music-list" id="musicList"></div>
+        <div id="btn-f" class="btn-touch">F</div>
+        <div id="btn-t" class="btn-touch">T</div>
+        <div id="btn-n" class="btn-touch">N</div>
+        <div id="btn-g" class="btn-touch">G</div>
+        <div id="btn-gas" class="btn-touch">GAS</div>
+        <div id="btn-brake" class="btn-touch">STOP</div>
     </div>
 
-    <!-- Persistent Bottom Floating Player -->
-    <div class="player-bar" id="playerBar" style="display: none;">
-        <div class="player-top">
-            <div class="player-track-details">
-                <img id="playerImg" src="" alt="Cover">
-                <div class="player-text">
-                    <h5 id="playerTitle">Tarona nomi</h5>
-                    <p id="playerArtist">Ijrochi</p>
-                </div>
-            </div>
-            <div class="player-controls">
-                <button class="player-btn" onclick="togglePlayPause()" id="playPauseBtn">▶</button>
-            </div>
-        </div>
-        <div class="progress-container">
-            <span class="time-stamp" id="currentTime">0:00</span>
-            <div class="progress-bar" onclick="seekAudio(event)">
-                <div class="progress-fill" id="progressFill"></div>
-            </div>
-            <span class="time-stamp" id="durationTime">0:00</span>
-        </div>
-    </div>
-
-    <audio id="globalAudio"></audio>
+    <div id="canvas-container"></div>
 
     <script>
-        let currentSubscribers = parseInt(localStorage.getItem('baastinxx_sub_count')) || 15312;
-        let favoriteTracks = JSON.parse(localStorage.getItem('baastinxx_favs')) || [];
-        let currentTab = 'explore';
+        let scene, camera, renderer, ambientLight, sun;
+        let player;
+        let cars = [];
+        let buildings = [];
+        let currentCar = null;
+        let leftArm, rightArm, leftLeg, rightLeg;
+        let inCar = false;
+        let isNight = true;
 
-        const audio = document.getElementById('globalAudio');
+        let garageDoor = null;
+        let garageDoorOpen = false;
 
-        document.getElementById('subCount').innerText = currentSubscribers.toLocaleString();
-
-        window.addEventListener('DOMContentLoaded', () => {
-            searchMusic('top music');
-            setupAudioEvents();
-        });
-
-        function switchTab(tab) {
-            currentTab = tab;
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-            if(tab === 'explore') {
-                event.target.classList.add('active');
-                searchMusic('top music');
-            } else {
-                event.target.classList.add('active');
-                renderFavorites();
+        let audioCtx;
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             }
         }
 
-        function subscribeUser() {
-            const email = document.getElementById('subEmail').value.trim();
-            if(!email) {
-                alert("Iltimos, pochtangizni kiriting!");
-                return;
-            }
-            
-            currentSubscribers += 1;
-            localStorage.setItem('baastinxx_sub_count', currentSubscribers);
-            document.getElementById('subCount').innerText = currentSubscribers.toLocaleString();
-
-            document.getElementById('subCard').innerHTML = `
-                <h3 style="color: #22c55e;">Siz guruhimizdasiz! 🎉</h3>
-                <p>Xush kelibsiz: ${email}</p>
-            `;
-        }
-
-        function handleKeyPress(e) {
-            if (e.key === 'Enter') searchMusic();
-        }
-
-        async function searchMusic(defaultQuery = null) {
-            if(currentTab !== 'explore') switchTab('explore');
-            let query = defaultQuery || document.getElementById('searchInput').value.trim();
-            const musicList = document.getElementById('musicList');
-            
-            if (!query) return;
-
-            musicList.innerHTML = `<p class="status-msg">Taronalar yuklanmoqda...</p>`;
-
+        function playStepSound() {
+            if (!audioCtx) return;
             try {
-                let response = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&media=music&limit=25`);
-                let data = await response.json();
-
-                renderTracks(data.results);
-            } catch (error) {
-                musicList.innerHTML = `<p class="status-msg">Ulanishda xatolik yuz berdi 😕 Qaytadan urinib ko'ring.</p>`;
-            }
+                let osc = audioCtx.createOscillator();
+                let gain = audioCtx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(120, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.08);
+                gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.08);
+            } catch(e) {}
         }
 
-        function renderTracks(tracks) {
-            const musicList = document.getElementById('musicList');
-            musicList.innerHTML = "";
-
-            if (!tracks || tracks.length === 0) {
-                musicList.innerHTML = `<p class="status-msg">Musiqa topilmadi.</p>`;
-                return;
-            }
-
-            tracks.forEach(track => {
-                const coverUrl = track.artworkUrl100 ? track.artworkUrl100.replace('100x100bb', '300x300bb') : '';
-                const isFav = favoriteTracks.some(f => f.trackId === track.trackId);
-
-                const card = document.createElement('div');
-                card.className = 'track-card';
-                card.innerHTML = `
-                    <div class="track-info">
-                        <img src="${coverUrl}" alt="cover">
-                        <div class="track-details">
-                            <h4>${track.trackName}</h4>
-                            <p>${track.artistName}</p>
-                        </div>
-                    </div>
-                    <div class="card-actions">
-                        <button class="btn-action fav-btn ${isFav ? 'active' : ''}" onclick="toggleFav('${track.trackId}', '${escapeQuotes(track.trackName)}', '${escapeQuotes(track.artistName)}', '${coverUrl}', '${track.previewUrl}')">
-                            ${isFav ? '❤️' : '🤍'}
-                        </button>
-                        <button class="btn-action play-btn" onclick="playTrack('${track.previewUrl}', '${escapeQuotes(track.trackName)}', '${escapeQuotes(track.artistName)}', '${coverUrl}')">▶</button>
-                    </div>
-                `;
-                musicList.appendChild(card);
-            });
+        function playCarEngineSound(speedVal) {
+            if (!audioCtx) return;
+            try {
+                let osc = audioCtx.createOscillator();
+                let gain = audioCtx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(60 + Math.abs(speedVal) * 30, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.05);
+            } catch(e) {}
         }
 
-        function escapeQuotes(str) {
-            return str.replace(/'/g, "\\'");
-        }
+        const carColors = [0xdc2626, 0x2563eb, 0x16a34a, 0xca8a04, 0x9333ea, 0x0891b2, 0xf97316, 0x000000, 0xffffff, 0xec4899];
 
-        function toggleFav(id, name, artist, cover, preview) {
-            const index = favoriteTracks.findIndex(f => f.trackId == id);
-            if(index > -1) {
-                favoriteTracks.splice(index, 1);
-            } else {
-                favoriteTracks.push({ trackId: id, trackName: name, artistName: artist, artworkUrl100: cover, previewUrl: preview });
-            }
-            localStorage.setItem('baastinxx_favs', JSON.stringify(favoriteTracks));
+        let carSpeed = 0;
+        let maxCarSpeed = 10.5;
+        let accel = 0.12;
+        let brake = 0.08;
+        let friction = 0.02;
+        let turnSpeed = 0.07;
+
+        let playerSpeed = 0.28;
+        let jumpVelocity = 0;
+        let isJumping = false;
+        let animTime = 0;
+        let keys = {};
+        let wheelAngle = 0;
+        let isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
+        setTimeout(() => {
+            const loader = document.getElementById('loader-screen');
+            loader.style.opacity = '0';
+            setTimeout(() => loader.remove(), 800);
+            initAudio();
+        }, 3000);
+
+        init();
+        animate();
+
+        function init() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x0f172a);
+            scene.fog = new THREE.FogExp2(0x0f172a, 0.0012);
+
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 3000);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+            ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+            scene.add(ambientLight);
+
+            sun = new THREE.DirectionalLight(0xfff7ed, 0.7);
+            sun.position.set(200, 400, 200);
+            sun.castShadow = true;
+            sun.shadow.mapSize.width = 2048;
+            sun.shadow.mapSize.height = 2048;
+            sun.shadow.camera.near = 0.5;
+            sun.shadow.camera.far = 1200;
+            const d = 400;
+            sun.shadow.camera.left = -d;
+            sun.shadow.camera.right = d;
+            sun.shadow.camera.top = d;
+            sun.shadow.camera.bottom = -d;
+            scene.add(sun);
+
+            createEnvironment();
+            buildDetailedCity();
+            createPlayerHouseAndGarage();
             
-            if(currentTab === 'favorites') {
-                renderFavorites();
-            } else {
-                searchMusic(document.getElementById('searchInput').value || 'top music');
+            cars.push(createModularCar(0xdc2626, new THREE.Vector3(12, 0, 5), "Gastinxx Supercar", true));
+            cars.push(createModularCar(0x2563eb, new THREE.Vector3(-18, 0, 30), "Sport GT Blue", false));
+            cars.push(createModularCar(0xca8a04, new THREE.Vector3(30, 0, -25), "Hyper Yellow", false));
+            cars.push(createModularCar(0x9333ea, new THREE.Vector3(-35, 0, -15), "Phantom Purple", false));
+
+            createHumanPlayer();
+
+            window.addEventListener('keydown', e => {
+                initAudio();
+                const k = e.key.toLowerCase();
+                keys[k] = true;
+                if (k === 'f') toggleVehicle();
+                if (k === 't' && inCar) tuneCar();
+                if (k === 'n') toggleNightDay();
+                if (k === 'g') toggleGarageDoor();
+                if (k === 'l' && inCar) toggleHeadlights();
+                if (e.code === 'Space' && !inCar && !isJumping) {
+                    jumpVelocity = 0.35;
+                    isJumping = true;
+                }
+            });
+
+            window.addEventListener('keyup', e => {
+                keys[e.key.toLowerCase()] = false;
+            });
+
+            window.addEventListener('resize', onWindowResize);
+            if (isTouch) setupTouchControls();
+        }
+
+        function createEnvironment() {
+            const groundGeo = new THREE.PlaneGeometry(4000, 4000);
+            const groundMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.85, metalness: 0.15 });
+            const ground = new THREE.Mesh(groundGeo, groundMat);
+            ground.rotation.x = -Math.PI / 2;
+            ground.receiveShadow = true;
+            scene.add(ground);
+
+            const gridHelper = new THREE.GridHelper(4000, 120, 0x38bdf8, 0x1e293b);
+            gridHelper.position.y = 0.05;
+            scene.add(gridHelper);
+        }
+
+        function createLetterF(parentGroup, x, y, z) {
+            const fMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
+            const vert = new THREE.Mesh(new THREE.BoxGeometry(0.8, 6, 0.4), fMat);
+            vert.position.set(x, y, z);
+            parentGroup.add(vert);
+            const topH = new THREE.Mesh(new THREE.BoxGeometry(3, 0.8, 0.4), fMat);
+            topH.position.set(x + 1.1, y + 2.6, z);
+            parentGroup.add(topH);
+            const midH = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.8, 0.4), fMat);
+            midH.position.set(x + 0.7, y + 0.5, z);
+            parentGroup.add(midH);
+        }
+
+        function buildDetailedCity() {
+            const buildingColors = [0x0f172a, 0x1e293b, 0x334155, 0x475569, 0x1e1b18, 0x09090b];
+            const windowMat = new THREE.MeshBasicMaterial({ color: 0xfde047 });
+
+            for (let x = -800; x <= 800; x += 140) {
+                for (let z = -800; z <= 800; z += 140) {
+                    if (Math.abs(x) < 120 && Math.abs(z) < 120) continue;
+
+                    const height = 120 + Math.random() * 250;
+                    const color = buildingColors[Math.floor(Math.random() * buildingColors.length)];
+
+                    const bGroup = new THREE.Group();
+                    const bGeo = new THREE.BoxGeometry(70, height, 70);
+                    const bMat = new THREE.MeshStandardMaterial({ color: color, roughness: 0.35, metalness: 0.65 });
+                    const building = new THREE.Mesh(bGeo, bMat);
+                    building.castShadow = true;
+                    building.receiveShadow = true;
+                    bGroup.add(building);
+
+                    bGroup.position.set(x, height / 2, z);
+                    scene.add(bGroup);
+
+                    buildings.push({ x: x, z: z, radius: 42 });
+
+                    createLetterF(scene, x, height / 2, z + 35.5);
+                    createLetterF(scene, x, height / 2, z - 35.5);
+                    
+                    for (let h = 12; h < height - 12; h += 18) {
+                        if (Math.random() > 0.35) {
+                            const winGeo = new THREE.BoxGeometry(70.2, 3.5, 24);
+                            const winMesh = new THREE.Mesh(winGeo, windowMat);
+                            winMesh.position.set(x, h, z);
+                            scene.add(winMesh);
+                        }
+                    }
+                }
             }
         }
 
-        function renderFavorites() {
-            if(favoriteTracks.length === 0) {
-                document.getElementById('musicList').innerHTML = `<p class="status-msg">Hali hech qanday tarona saralanmagan ❤️</p>`;
-                return;
-            }
-            renderTracks(favoriteTracks);
+        function createPlayerHouseAndGarage() {
+            const houseGroup = new THREE.Group();
+
+            const wallMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.5 });
+            const floorMat = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.4 });
+            const woodMat = new THREE.MeshStandardMaterial({ color: 0x854d0e, roughness: 0.6 });
+            const bedMat = new THREE.MeshStandardMaterial({ color: 0xef4444, roughness: 0.5 });
+
+            const floor1 = new THREE.Mesh(new THREE.BoxGeometry(22, 0.4, 16), floorMat);
+            floor1.position.set(0, 0.2, 0);
+            houseGroup.add(floor1);
+
+            const floor2 = new THREE.Mesh(new THREE.BoxGeometry(22, 0.4, 16), floorMat);
+            floor2.position.set(0, 7.2, 0);
+            houseGroup.add(floor2);
+
+            const wallBack = new THREE.Mesh(new THREE.BoxGeometry(22, 14, 0.8), wallMat);
+            wallBack.position.set(0, 7, -7.8);
+            houseGroup.add(wallBack);
+
+            const bed = new THREE.Mesh(new THREE.BoxGeometry(3, 1.2, 4), bedMat);
+            bed.position.set(-7, 7.8, -5);
+            houseGroup.add(bed);
+
+            const table = new THREE.Mesh(new THREE.BoxGeometry(3, 1.5, 2), woodMat);
+            table.position.set(6, 7.9, 4);
+            houseGroup.add(table);
+
+            const garageBox = new THREE.Mesh(new THREE.BoxGeometry(12, 8, 14), new THREE.MeshStandardMaterial({ color: 0x1e293b }));
+            garageBox.position.set(25, 4, 0);
+            houseGroup.add(garageBox);
+            buildings.push({ x: 25, z: 0, radius: 10 });
+
+            const doorGeo = new THREE.BoxGeometry(10, 7.5, 0.4);
+            const doorMat = new THREE.MeshStandardMaterial({ color: 0x38bdf8, metalness: 0.8, roughness: 0.2 });
+            garageDoor = new THREE.Mesh(doorGeo, doorMat);
+            garageDoor.position.set(25, 3.8, 7.1);
+            houseGroup.add(garageDoor);
+
+            houseGroup.position.set(-40, 0, -40);
+            scene.add(houseGroup);
+            buildings.push({ x: -40, z: -40, radius: 14 });
         }
 
-        function playTrack(url, name, artist, cover) {
-            audio.src = url;
-            audio.play();
+        function toggleGarageDoor() {
+            garageDoorOpen = !garageDoorOpen;
+        }
+
+        function createModularCar(colorHex, position, name, isGastinxxCar) {
+            const carGroup = new THREE.Group();
+            const carWheels = [];
+            const carHeadlights = [];
+
+            const bodyMat = new THREE.MeshStandardMaterial({ color: colorHex, metalness: 0.95, roughness: 0.05 });
+            const carbonMat = new THREE.MeshStandardMaterial({ color: 0x09090b, roughness: 0.45 });
+            const glassMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, transparent: true, opacity: 0.75, roughness: 0.1 });
+            const chromeMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, metalness: 1.0, roughness: 0.0 });
+            const lightOffMat = new THREE.MeshStandardMaterial({ color: 0x475569 });
+
+            const chassisGeo = new THREE.BoxGeometry(2.4, 0.2, 5.2);
+            const chassis = new THREE.Mesh(chassisGeo, carbonMat);
+            chassis.position.y = 0.3;
+            carGroup.add(chassis);
+
+            const bodyGeo = new THREE.BoxGeometry(2.2, 0.65, 3.0);
+            const body = new THREE.Mesh(bodyGeo, bodyMat);
+            body.position.set(0, 0.65, -0.2);
+            body.castShadow = true;
+            body.name = "carBody";
+            carGroup.add(body);
+
+            const hoodGeo = new THREE.BoxGeometry(2.1, 0.2, 1.8);
+            const hood = new THREE.Mesh(hoodGeo, bodyMat);
+            hood.position.set(0, 0.72, 1.65);
+            hood.rotation.x = -0.12;
+            hood.name = "carBody";
+            carGroup.add(hood);
+
+            const cabinGeo = new THREE.BoxGeometry(1.8, 0.58, 2.0);
+            const cabin = new THREE.Mesh(cabinGeo, glassMat);
+            cabin.position.set(0, 1.15, -0.3);
+            carGroup.add(cabin);
+
+            if (isGastinxxCar) {
+                const textCanvas = document.createElement('canvas');
+                textCanvas.width = 512;
+                textCanvas.height = 128;
+                const ctx = textCanvas.getContext('2d');
+                ctx.fillStyle = '#38bdf8';
+                ctx.font = 'bold 72px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('GASTINXX', 256, 64);
+
+                const textTexture = new THREE.CanvasTexture(textCanvas);
+                const textMat = new THREE.MeshBasicMaterial({ map: textTexture, transparent: true });
+                const textGeo = new THREE.PlaneGeometry(1.4, 0.35);
+                const textMesh = new THREE.Mesh(textGeo, textMat);
+                textMesh.position.set(0, 0.83, 1.6);
+                textMesh.rotation.x = -Math.PI / 2 - 0.12;
+                carGroup.add(textMesh);
+            }
+
+            const spoilerBar = new THREE.Mesh(new THREE.BoxGeometry(2.1, 0.1, 0.4), carbonMat);
+            spoilerBar.position.set(0, 1.25, -2.1);
+            carGroup.add(spoilerBar);
+
+            const hlGeo = new THREE.BoxGeometry(0.42, 0.16, 0.12);
+            const hlLeft = new THREE.Mesh(hlGeo, lightOffMat);
+            hlLeft.position.set(-0.8, 0.65, 2.5);
+            const hlRight = hlLeft.clone();
+            hlRight.position.x = 0.8;
+            carGroup.add(hlLeft, hlRight);
+
+            const spot1 = new THREE.SpotLight(0xffffff, 0, 200, Math.PI / 5, 0.45);
+            spot1.position.set(-0.8, 0.65, 2.5);
+            spot1.target.position.set(-0.8, 0, 25);
+            const spot2 = new THREE.SpotLight(0xffffff, 0, 200, Math.PI / 5, 0.45);
+            spot2.position.set(0.8, 0.65, 2.5);
+            spot2.target.position.set(0.8, 0, 25);
             
-            document.getElementById('playerBar').style.display = 'flex';
-            document.getElementById('playerTitle').innerText = name;
-            document.getElementById('playerArtist').innerText = artist;
-            document.getElementById('playerImg').src = cover;
-            document.getElementById('playPauseBtn').innerText = '⏸';
+            carGroup.add(spot1, spot2, spot1.target, spot2.target);
+            carHeadlights.push(spot1, spot2);
+
+            const wheelPositions = [[-1.25, 0.42, 1.5], [1.25, 0.42, 1.5], [-1.25, 0.42, -1.5], [1.25, 0.42, -1.5]];
+            wheelPositions.forEach((pos) => {
+                const wheelGroup = new THREE.Group();
+                const tireGeo = new THREE.CylinderGeometry(0.44, 0.44, 0.42, 32);
+                const tireMat = new THREE.MeshStandardMaterial({ color: 0x09090b, roughness: 0.85 });
+                const tire = new THREE.Mesh(tireGeo, tireMat);
+                tire.rotation.z = Math.PI / 2;
+                tire.castShadow = true;
+                wheelGroup.add(tire);
+
+                const rimGeo = new THREE.CylinderGeometry(0.26, 0.26, 0.44, 12);
+                const rim = new THREE.Mesh(rimGeo, chromeMat);
+                rim.rotation.z = Math.PI / 2;
+                wheelGroup.add(rim);
+
+                wheelGroup.position.set(...pos);
+                carGroup.add(wheelGroup);
+                carWheels.push(wheelGroup);
+            });
+
+            carGroup.position.copy(position);
+            scene.add(carGroup);
+
+            return {
+                mesh: carGroup,
+                wheels: carWheels,
+                headlights: carHeadlights,
+                colorIndex: 0,
+                headlightsOn: false,
+                name: name
+            };
         }
 
-        function togglePlayPause() {
-            if(audio.paused) {
-                audio.play();
-                document.getElementById('playPauseBtn').innerText = '⏸';
+        function tuneCar() {
+            if (!currentCar) return;
+            currentCar.colorIndex = (currentCar.colorIndex + 1) % carColors.length;
+            currentCar.mesh.traverse(child => {
+                if (child.name === "carBody") {
+                    child.material.color.setHex(carColors[currentCar.colorIndex]);
+                }
+            });
+        }
+
+        function toggleNightDay() {
+            isNight = !isNight;
+            if (isNight) {
+                scene.background.setHex(0x0f172a);
+                scene.fog.color.setHex(0x0f172a);
+                ambientLight.intensity = 0.4;
+                sun.intensity = 0.7;
             } else {
-                audio.pause();
-                document.getElementById('playPauseBtn').innerText = '▶';
+                scene.background.setHex(0x38bdf8);
+                scene.fog.color.setHex(0x38bdf8);
+                ambientLight.intensity = 0.95;
+                sun.intensity = 1.4;
             }
         }
 
-        function setupAudioEvents() {
-            audio.addEventListener('timeupdate', () => {
-                if(!audio.duration) return;
-                const progress = (audio.currentTime / audio.duration) * 100;
-                document.getElementById('progressFill').style.width = `${progress}%`;
-                document.getElementById('currentTime').innerText = formatTime(audio.currentTime);
-                document.getElementById('durationTime').innerText = formatTime(audio.duration);
-            });
-
-            audio.addEventListener('ended', () => {
-                document.getElementById('playPauseBtn').innerText = '▶';
+        function toggleHeadlights() {
+            if (!currentCar) return;
+            currentCar.headlightsOn = !currentCar.headlightsOn;
+            currentCar.headlights.forEach(spot => {
+                spot.intensity = currentCar.headlightsOn ? 6 : 0;
             });
         }
 
-        function formatTime(secs) {
-            const m = Math.floor(secs / 60);
-            const s = Math.floor(secs % 60);
-            return `${m}:${s < 10 ? '0' : ''}${s}`;
+        // Haqiqiy insonga o'xshash odam modeli (Yumaloq bosh, silindrsimon qo'l-oyoqlar va tanasi)
+        function createHumanPlayer() {
+            player = new THREE.Group();
+            const skinMat = new THREE.MeshStandardMaterial({ color: 0xffdbac, roughness: 0.6 });
+            const clothMat = new THREE.MeshStandardMaterial({ color: 0x0284c7, roughness: 0.4 });
+            const pantsMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.5 });
+            const hairMat = new THREE.MeshStandardMaterial({ color: 0x1e1b18, roughness: 0.8 });
+
+            // Tana (Torso)
+            const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.16, 0.75, 16), clothMat);
+            torso.position.y = 1.0;
+            torso.castShadow = true;
+            player.add(torso);
+
+            // Bosh
+            const head = new THREE.Mesh(new THREE.SphereGeometry(0.22, 16, 16), skinMat);
+            head.position.y = 1.58;
+            head.castShadow = true;
+            player.add(head);
+
+            // Soch
+            const hair = new THREE.Mesh(new THREE.SphereGeometry(0.23, 16, 16, 0, Math.PI * 2, 0, Math.PI * 0.5), hairMat);
+            hair.position.y = 1.63;
+            player.add(hair);
+
+            // Qo'llar (O'ng va Chap)
+            const armGeo = new THREE.CylinderGeometry(0.08, 0.06, 0.65, 12);
+            armGeo.translate(0, -0.25, 0);
+
+            leftArm = new THREE.Mesh(armGeo, skinMat);
+            leftArm.position.set(-0.32, 1.3, 0);
+            
+            rightArm = new THREE.Mesh(armGeo, skinMat);
+            rightArm.position.set(0.32, 1.3, 0);
+            
+            player.add(leftArm, rightArm);
+
+            // Oyoqlar (O'ng va Chap)
+            const legGeo = new THREE.CylinderGeometry(0.09, 0.07, 0.7, 12);
+            legGeo.translate(0, -0.3, 0);
+
+            leftLeg = new THREE.Mesh(legGeo, pantsMat);
+            leftLeg.position.set(-0.14, 0.65, 0);
+
+            rightLeg = new THREE.Mesh(legGeo, pantsMat);
+            rightLeg.position.set(0.14, 0.65, 0);
+
+            player.add(leftLeg, rightLeg);
+
+            player.position.set(0, 0, 18);
+            scene.add(player);
         }
 
-        function seekAudio(e) {
-            const rect = e.currentTarget.getBoundingClientRect();
-            const clickPosition = (e.clientX - rect.left) / rect.width;
-            audio.currentTime = clickPosition * audio.duration;
+        function toggleVehicle() {
+            if (!inCar) {
+                let closest = null;
+                let minDist = 6.5;
+                cars.forEach(c => {
+                    const d = player.position.distanceTo(c.mesh.position);
+                    if (d < minDist) { minDist = d; closest = c; }
+                });
+
+                if (closest) {
+                    currentCar = closest;
+                    inCar = true;
+                    player.visible = false;
+                    document.getElementById('mode-tag').innerText = `REJIM: ${currentCar.name.toUpperCase()}`;
+                    document.getElementById('mode-tag').style.background = "#3b82f6";
+                    document.getElementById('mode-tag').style.color = "#fff";
+                    if (isTouch) {
+                        document.getElementById('btn-gas').style.display = 'flex';
+                        document.getElementById('btn-brake').style.display = 'flex';
+                    }
+                }
+            } else {
+                inCar = false;
+                player.visible = true;
+                player.position.copy(currentCar.mesh.position).add(new THREE.Vector3(2.8, 0, 0));
+                currentCar = null;
+                document.getElementById('mode-tag').innerText = "REJIM: PERSONAJ";
+                document.getElementById('mode-tag').style.background = "#22c55e";
+                document.getElementById('mode-tag').style.color = "#052e16";
+                if (isTouch) {
+                    document.getElementById('btn-gas').style.display = 'none';
+                    document.getElementById('btn-brake').style.display = 'none';
+                }
+            }
+        }
+
+        function setupTouchControls() {
+            document.getElementById('touch-controls').style.display = 'block';
+            const wheelZone = document.getElementById('steeringWheelZone');
+            const wheelElem = document.getElementById('steeringWheel');
+            let active = false;
+            let centerPos = { x: 0, y: 0 };
+
+            wheelZone.addEventListener('touchstart', e => {
+                active = true;
+                const rect = wheelZone.getBoundingClientRect();
+                centerPos = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+            });
+
+            window.addEventListener('touchmove', e => {
+                if (!active) return;
+                const touch = e.touches[0];
+                let deg = touch.clientX - centerPos.x;
+                deg = Math.max(-75, Math.min(75, deg));
+                
+                wheelAngle = deg / 75;
+                wheelElem.style.transform = `rotate(${deg * 1.5}deg)`;
+            });
+
+            window.addEventListener('touchend', () => {
+                active = false;
+                wheelAngle = 0;
+                wheelElem.style.transform = `rotate(0deg)`;
+            });
+
+            document.getElementById('btn-f').addEventListener('touchstart', e => { e.preventDefault(); toggleVehicle(); });
+            document.getElementById('btn-t').addEventListener('touchstart', e => { e.preventDefault(); if(inCar) tuneCar(); });
+            document.getElementById('btn-n').addEventListener('touchstart', e => { e.preventDefault(); toggleNightDay(); });
+            document.getElementById('btn-g').addEventListener('touchstart', e => { e.preventDefault(); toggleGarageDoor(); });
+            
+            document.getElementById('btn-gas').addEventListener('touchstart', () => keys['w'] = true);
+            document.getElementById('btn-gas').addEventListener('touchend', () => keys['w'] = false);
+            document.getElementById('btn-brake').addEventListener('touchstart', () => keys['s'] = true);
+            document.getElementById('btn-brake').addEventListener('touchend', () => keys['s'] = false);
+        }
+
+        function checkCollision(nextX, nextZ) {
+            for (let b of buildings) {
+                let dist = Math.hypot(nextX - b.x, nextZ - b.z);
+                if (dist < b.radius) return true;
+            }
+            return false;
+        }
+
+        function updatePhysics() {
+            let dx = 0, dz = 0;
+
+            let isRunning = keys['shift'] || keys['Shift'];
+            let currentMoveSpeed = isRunning ? playerSpeed * 1.8 : playerSpeed;
+
+            if (keys['w'] || keys['W']) dz -= 1;
+            if (keys['s'] || keys['S']) dz += 1;
+            if (keys['a'] || keys['A']) dx -= 1;
+            if (keys['d'] || keys['D']) dx += 1;
+
+            if (garageDoor) {
+                let targetY = garageDoorOpen ? 5.5 : 3.8;
+                garageDoor.position.y += (targetY - garageDoor.position.y) * 0.1;
+            }
+
+            if (inCar && currentCar) {
+                if (keys['w'] || keys['W']) {
+                    if (carSpeed < maxCarSpeed) carSpeed += accel;
+                    playCarEngineSound(carSpeed);
+                } else if (keys['s'] || keys['S']) {
+                    if (carSpeed > -maxCarSpeed / 3) carSpeed -= brake;
+                    playCarEngineSound(carSpeed);
+                } else {
+                    if (carSpeed > 0) carSpeed = Math.max(0, carSpeed - friction);
+                    if (carSpeed < 0) carSpeed = Math.min(0, carSpeed + friction);
+                }
+
+                const turnFactor = Math.max(0.2, Math.abs(carSpeed) / maxCarSpeed);
+                let currentTurn = wheelAngle !== 0 ? wheelAngle : 0;
+                if (keys['a'] || keys['A']) currentTurn = 1;
+                if (keys['d'] || keys['D']) currentTurn = -1;
+
+                if (currentTurn !== 0) {
+                    currentCar.mesh.rotation.y += turnSpeed * turnFactor * currentTurn;
+                }
+
+                let nextX = currentCar.mesh.position.x + Math.sin(currentCar.mesh.rotation.y) * carSpeed;
+                let nextZ = currentCar.mesh.position.z + Math.cos(currentCar.mesh.rotation.y) * carSpeed;
+
+                if (!checkCollision(nextX, nextZ)) {
+                    currentCar.mesh.position.x = nextX;
+                    currentCar.mesh.position.z = nextZ;
+                } else {
+                    carSpeed = -carSpeed * 0.3;
+                }
+
+                currentCar.wheels.forEach((w, index) => {
+                    w.children[0].rotation.x += carSpeed * 0.3;
+                    if (index < 2) {
+                        w.rotation.y = -currentTurn * 0.42;
+                    }
+                });
+
+                document.getElementById('speed-num').innerText = Math.round((Math.abs(carSpeed) / maxCarSpeed) * 900);
+
+                const camOffset = new THREE.Vector3(0, 5.2, -13).applyAxisAngle(new THREE.Vector3(0, 1, 0), currentCar.mesh.rotation.y);
+                camera.position.lerp(currentCar.mesh.position.clone().add(camOffset), 0.1);
+                camera.lookAt(currentCar.mesh.position);
+
+            } else {
+                document.getElementById('speed-num').innerText = Math.round(currentMoveSpeed * 30);
+
+                let isMoving = false;
+                let moveVector = new THREE.Vector3();
+
+                if (dx !== 0 || dz !== 0) {
+                    moveVector.set(dx, 0, dz).normalize().multiplyScalar(currentMoveSpeed);
+                    isMoving = true;
+                }
+
+                if (isMoving) {
+                    let nextPlayerX = player.position.x + moveVector.x;
+                    let nextPlayerZ = player.position.z + moveVector.z;
+
+                    if (!checkCollision(nextPlayerX, nextPlayerZ)) {
+                        player.position.x = nextPlayerX;
+                        player.position.z = nextPlayerZ;
+                    }
+
+                    const angle = Math.atan2(moveVector.x, moveVector.z);
+                    player.rotation.y = angle;
+
+                    animTime += isRunning ? 0.35 : 0.22;
+                    leftArm.rotation.x = Math.sin(animTime) * 0.75;
+                    rightArm.rotation.x = -Math.sin(animTime) * 0.75;
+                    leftLeg.rotation.x = -Math.sin(animTime) * 0.75;
+                    rightLeg.rotation.x = -Math.sin(animTime) * 0.75;
+
+                    if (Math.random() < 0.15) playStepSound();
+                } else {
+                    leftArm.rotation.x = 0;
+                    rightArm.rotation.x = 0;
+                    leftLeg.rotation.x = 0;
+                    rightLeg.rotation.x = 0;
+                }
+
+                if (isJumping) {
+                    player.position.y += jumpVelocity;
+                    jumpVelocity -= 0.019;
+                    if (player.position.y <= 0) {
+                        player.position.y = 0;
+                        isJumping = false;
+                    }
+                }
+
+                const targetCamPos = new THREE.Vector3(player.position.x, player.position.y + 4.2, player.position.z + 8.5);
+                camera.position.lerp(targetCamPos, 0.1);
+                camera.lookAt(player.position.x, player.position.y + 1, player.position.z);
+            }
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            updatePhysics();
+            renderer.render(scene, camera);
         }
     </script>
 </body>
